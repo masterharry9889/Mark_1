@@ -1,0 +1,113 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+.env
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# PyTorch
+*.pt
+*.pth
+*.bin
+*.safetensors
+
+# Checkpoints and model outputs
+checkpoints/
+*.ckpt
+outputs/
+runs/
+logs/
+wandb/
+.tensorboard/
+
+# Data
+data/
+*.bin
+*.npy
+*.npz
+*.arrow
+*.parquet
+*.h5
+*.hdf5
+
+# Tokenizer
+*.model
+*.vocab
+*.json
+!configs/*.yaml
+!configs/*.yml
+
+# Experiment tracking
+mlruns/
+.mlflow/
+
+# Distributed training
+*.log
+*.out
+*.err
+
+# Coverage / Testing
+.coverage
+htmlcov/
+.pytest_cache/
+.tox/
+.mypy_cache/
+.ruff_cache/
+
+# OS
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Secrets
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+*.crt
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+
+# Profiling
+*.prof
+*.pstats

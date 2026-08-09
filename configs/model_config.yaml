@@ -1,0 +1,131 @@
+# Model Configuration for MoE Transformer
+# Contains all predefined model configurations
+
+# Default configuration (used when no specific model is selected)
+defaults:
+  vocab_size: 50257
+  d_model: 6144
+  n_layers: 32
+  n_heads: 48
+  q_latent_dim: 1536
+  kv_latent_dim: 512
+  max_seq_len: 4096
+  norm_eps: 1e-6
+  rope_base: 10000
+  rope_scale: 1.0
+  original_max_seq_len: 2048
+  extrapolation_factor: 1.0
+  attn_factor: 1.0
+  beta_fast: 32
+  beta_slow: 1
+  dropout: 0.0
+  tie_weights: true
+  
+  moe:
+    n_experts: 8
+    top_k: 2
+    d_ff_expert: 16384
+    d_ff_shared: 16384
+    router_jitter_noise: 0.01
+    shared_expert: true
+  
+  loss:
+    aux_loss_weight: 0.01
+    z_loss_weight: 0.001
+
+# Predefined model configurations
+models:
+  moe-small:
+    vocab_size: 50257
+    d_model: 768
+    n_layers: 12
+    n_heads: 12
+    q_latent_dim: 192
+    kv_latent_dim: 64
+    max_seq_len: 2048
+    moe:
+      n_experts: 4
+      top_k: 2
+      d_ff_expert: 2048
+      d_ff_shared: 2048
+  
+  moe-medium:
+    vocab_size: 50257
+    d_model: 2048
+    n_layers: 24
+    n_heads: 16
+    q_latent_dim: 512
+    kv_latent_dim: 128
+    max_seq_len: 4096
+    moe:
+      n_experts: 8
+      top_k: 2
+      d_ff_expert: 5504
+      d_ff_shared: 5504
+  
+  moe-large:
+    vocab_size: 50257
+    d_model: 6144
+    n_layers: 32
+    n_heads: 48
+    q_latent_dim: 1536
+    kv_latent_dim: 512
+    max_seq_len: 4096
+    moe:
+      n_experts: 8
+      top_k: 2
+      d_ff_expert: 16384
+      d_ff_shared: 16384
+  
+  moe-xlarge:
+    vocab_size: 50257
+    d_model: 8192
+    n_layers: 48
+    n_heads: 64
+    q_latent_dim: 2048
+    kv_latent_dim: 512
+    max_seq_len: 8192
+    moe:
+      n_experts: 16
+      top_k: 2
+      d_ff_expert: 22016
+      d_ff_shared: 22016
+  
+  moe-225b:
+    vocab_size: 50257
+    d_model: 12288
+    n_layers: 96
+    n_heads: 96
+    q_latent_dim: 1536
+    kv_latent_dim: 512
+    max_seq_len: 8192
+    original_max_seq_len: 2048
+    norm_eps: 1e-6
+    norm_type: "rmsnorm"
+    rope_base: 10000
+    rope_scale: 4.0
+    extrapolation_factor: 1.0
+    attn_factor: 1.0
+    beta_fast: 32
+    beta_slow: 1
+    dropout: 0.0
+    attn_dropout: 0.0
+    residual_dropout: 0.0
+    tie_weights: true
+    moe:
+      n_experts: 256
+      top_k: 8
+      d_ff_expert: 16384
+      d_ff_shared: 16384
+      router_jitter_noise: 0.01
+      shared_expert: true
+      expert_parallel: true
+      capacity_factor: 1.25
+      drop_tokens: false
+    loss:
+      aux_loss_weight: 0.01
+      z_loss_weight: 0.001
+    init:
+      std: 0.02
+      init_method: "normal"
+      rope_init: "default"

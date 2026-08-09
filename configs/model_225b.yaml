@@ -1,0 +1,67 @@
+# MoE-225B Model Configuration
+# All hyperparameters for the 225B parameter MoE model
+
+model:
+  # Vocabulary
+  vocab_size: 50257
+  
+  # Transformer dimensions
+  d_model: 12288          # Hidden dimension
+  n_layers: 96            # Number of transformer layers
+  n_heads: 96             # Number of attention heads
+  head_dim: 128           # d_model / n_heads
+  
+  # Multi-Head Latent Attention (MLA)
+  q_latent_dim: 1536      # Query latent dimension
+  kv_latent_dim: 512      # Key/Value latent dimension
+  
+  # Sequence length
+  max_seq_len: 8192       # Maximum sequence length during training
+  original_max_seq_len: 2048  # Original max seq len for RoPE
+  
+  # Normalization
+  norm_eps: 1e-6
+  norm_type: "rmsnorm"    # rmsnorm or layernorm
+  
+  # MoE Configuration
+  moe:
+    n_experts: 256        # Total experts per layer
+    top_k: 8              # Experts activated per token
+    d_ff_expert: 16384    # FFN inner dim per expert
+    d_ff_shared: 16384    # Shared expert FFN dim
+    router_jitter_noise: 0.01
+    shared_expert: true   # Use shared expert
+    expert_parallel: true # Enable expert parallelism
+    capacity_factor: 1.25 # Expert capacity factor
+    drop_tokens: false    # Drop overflow tokens
+  
+  # Positional Embeddings (YaRN RoPE)
+  rope:
+    base: 10000
+    scale: 4.0            # YaRN scale factor for 8k context
+    extrapolation_factor: 1.0
+    attn_factor: 1.0
+    beta_fast: 32
+    beta_slow: 1
+    type: "yarn"          # yarn, standard, or llama3
+  
+  # Weight tying
+  tie_weights: true
+  
+  # Dropout
+  dropout: 0.0
+  attn_dropout: 0.0
+  residual_dropout: 0.0
+
+# Loss Configuration
+loss:
+  aux_loss_weight: 0.01   # Load balancing loss weight
+  z_loss_weight: 0.001    # Router z-loss weight
+  cross_entropy: "fused"  # Fused cross entropy
+  label_smoothing: 0.0
+
+# Initialization
+init:
+  std: 0.02
+  init_method: "normal"   # normal, truncated_normal
+  rope_init: "default"    # default, llama3

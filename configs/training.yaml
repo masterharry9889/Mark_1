@@ -1,0 +1,135 @@
+# MoE-225B Training Configuration
+# Learning rate, batch size, parallelism, etc.
+
+training:
+  # Global batch size (tokens)
+  global_batch_size: 4194304      # 4M tokens per step
+  micro_batch_size: 32            # Per GPU micro batch
+  sequence_length: 8192           # Training sequence length
+  gradient_accumulation_steps: 16 # Auto-calculated if not specified
+  
+  # Training duration
+  max_steps: 200000               # Total training steps
+  warmup_steps: 2000              # LR warmup steps
+  lr_decay_steps: 180000          # LR decay steps (after warmup)
+  min_lr_ratio: 0.1               # Minimum LR as ratio of peak LR
+  
+  # Learning rates
+  peak_lr: 1.5e-4                 # Peak learning rate
+  router_lr: 3.0e-4               # Higher LR for router (2x)
+  min_lr: 1.5e-5                  # Minimum LR
+  
+  # Optimizer
+  optimizer:
+    type: "adamw"
+    betas: [0.9, 0.95]
+    eps: 1e-8
+    weight_decay: 0.1
+    router_weight_decay: 0.0      # No weight decay for router
+    max_grad_norm: 1.0
+    clip_grad_value: null
+  
+  # Scheduler
+  scheduler:
+    type: "wsd"                   # Warmup-Stable-Decay
+    warmup_type: "linear"
+    decay_type: "cosine"
+    stable_fraction: 0.5          # Fraction of steps at peak LR
+  
+  # Precision
+  precision: "bf16"               # bf16, fp16, fp32
+  use_flash_attention: true
+  flash_attention_version: 2
+  
+  # Parallelism
+  parallelism:
+    tensor_parallel: 8            # TP degree
+    pipeline_parallel: 4          # PP degree
+    expert_parallel: 8            # EP degree
+    context_parallel: 1           # CP degree
+    sequence_parallel: true       # SP within TP
+    zero_stage: 1                 # ZeRO stage (1, 2, 3)
+  
+  # Expert parallelism
+  expert_parallel:
+    all_to_all_backend: "nccl"
+    overlap_comm_compute: true
+    capacity_factor: 1.25
+    drop_tokens: false
+  
+  # Pipeline parallelism
+  pipeline_parallel:
+    schedule: "1f1b"              # 1F1B, gpipe, or interleaved
+    microbatches: 4
+    recompute: true               # Activation recomputation
+    recompute_layers: "all"       # all, attn_only, moe_only
+  
+  # Tensor parallelism
+  tensor_parallel:
+    mode: "row"                   # row, col, or custom
+    async_op: false
+  
+  # Context parallelism
+  context_parallel:
+    enabled: false
+    rotate_method: "all_gather"   # all_gather, ring
+  
+  # Checkpointing
+  checkpoint:
+    save_interval: 500            # Steps between checkpoints
+    keep_last_n: 5                # Number of checkpoints to keep
+    save_optimizer: true
+    save_rng: true
+    async_save: true
+    path: "checkpoints/"
+  
+  # Logging
+  logging:
+    log_interval: 10              # Steps between logs
+    wandb:
+      enabled: true
+      project: "moe-225b"
+      entity: null
+      tags: ["pretraining"]
+    tensorboard:
+      enabled: true
+      log_dir: "logs/tensorboard"
+    console:
+      enabled: true
+      level: "INFO"
+  
+  # Evaluation
+  evaluation:
+    eval_interval: 1000           # Steps between evaluations
+    eval_steps: 100               # Number of eval steps
+    eval_batch_size: 16
+    eval_datasets: ["wikitext", "c4", "pile"]
+    metrics: ["perplexity", "bits_per_byte", "accuracy"]
+  
+  # Data
+  data:
+    train_dataset: "fineweb-edu"  # fineweb, pile, c4, dolma
+    train_data_path: "data/train"
+    val_data_path: "data/val"
+    num_workers: 4
+    prefetch_factor: 4
+    pin_memory: true
+    shuffle_buffer: 10000
+    pack_sequences: true          # Pack multiple docs into one sequence
+    min_seq_len: 256              # Minimum sequence length
+    max_seq_len: 8192             # Maximum sequence length
+  
+  # Seed
+  seed: 42
+  deterministic: false
+  
+  # Resume
+  resume_from: null
+  load_optimizer: true
+  load_scheduler: true
+
+# Distributed
+distributed:
+  backend: "nccl"
+  init_method: "env://"
+  timeout_minutes: 30
