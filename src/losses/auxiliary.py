@@ -1,3 +1,5 @@
+import torch
+import torch.nn.functional as F
 # losses/auxiliary.py
 class MoEAuxiliaryLoss:
     """Load balancing + router z-loss.

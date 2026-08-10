@@ -1,3 +1,5 @@
+import torch
+
 # inference/expert_cache.py
 class ExpertCache:
     """LRU cache for expert weights on GPU.

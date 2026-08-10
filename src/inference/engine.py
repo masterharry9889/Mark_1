@@ -1,3 +1,5 @@
+import torch
+import torch.nn.functional as F
 # inference/engine.py
 class MoEInferenceEngine:
     """Production inference with KV cache + expert caching."""

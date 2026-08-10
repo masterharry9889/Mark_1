@@ -1,3 +1,6 @@
+import torch
+import torch.nn as nn
+import torch.distributed as dist
 # parallel/expert_parallel.py
 class ExpertParallel:
     """Distribute experts across GPUs.

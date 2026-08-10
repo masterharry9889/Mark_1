@@ -1,3 +1,5 @@
+import torch
+import torch.nn as nn
 # parallel/pipeline_parallel.py
 class PipelineParallel:
     """Split transformer layers across GPU groups."""

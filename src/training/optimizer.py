@@ -1,4 +1,5 @@
 import torch
+import torch.nn as nn
 
 # training/optimizer.py
 class MoEAdamW:

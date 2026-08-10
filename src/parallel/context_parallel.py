@@ -1,3 +1,6 @@
+import torch
+import torch.nn.functional as F
+import torch.distributed as dist
 # parallel/context_parallel.py
 class ContextParallel:
     """Split long sequences across GPUs for attention."""

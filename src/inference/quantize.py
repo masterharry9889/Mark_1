@@ -1,3 +1,5 @@
+import torch
+import torch.nn as nn
 # inference/quantize.py
 class MoEQuantizer:
     """Per-expert quantization (INT8/INT4)."""

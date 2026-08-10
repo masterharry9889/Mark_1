@@ -1,0 +1,15 @@
+# configs/data.yaml
+# Data pipeline configuration
+
+tokenizer: "gpt2"
+max_seq_len: 1024
+seed: 42
+buffer_size: 10000
+
+# Tier mixing ratios (sum = 1.0)
+# Tier 1: Foundation (80%)
+# Tier 2: Quality (15%)
+# Tier 3: Alignment (5%)
+
+# Individual source weights are defined in src/data/pipeline.py
+# This file configures global data settings

@@ -1,3 +1,5 @@
+import torch
+
 # training/scheduler.py
 class WarmupStableDecay:
     """WSD schedule: warmup → stable → linear decay."""

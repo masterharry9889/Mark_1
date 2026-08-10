@@ -1,0 +1,44 @@
+# configs/model_7b.yaml
+# ~7B parameter MoE model configuration
+
+# TransformerConfig
+vocab_size: 50257  # Will be overridden by tokenizer
+d_model: 4096
+n_layers: 32
+n_heads: 32
+q_latent_dim: 1024
+kv_latent_dim: 256
+max_seq_len: 1024
+norm_eps: 1e-6
+norm_type: "rmsnorm"
+rope_base: 10000
+rope_scale: 1.0
+original_max_seq_len: 2048
+extrapolation_factor: 1.0
+attn_factor: 1.0
+beta_fast: 32
+beta_slow: 1
+dropout: 0.0
+attn_dropout: 0.0
+residual_dropout: 0.0
+tie_weights: true
+init_std: 0.02
+init_method: "normal"
+rope_init: "default"
+
+# MoEConfig
+moe:
+  n_experts: 8
+  top_k: 2
+  d_ff_expert: 14336
+  d_ff_shared: 14336
+  router_jitter_noise: 0.01
+  shared_expert: true
+  expert_parallel: false
+  capacity_factor: 1.25
+  drop_tokens: false
+
+# LossConfig
+loss:
+  aux_loss_weight: 0.01
+  z_loss_weight: 0.001

@@ -1,3 +1,5 @@
+import torch
+import torch.nn.functional as F
 # losses/cross_entropy.py
 class FusedCrossEntropy:
     """Fused CE with optional label smoothing.

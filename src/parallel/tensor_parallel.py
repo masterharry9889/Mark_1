@@ -1,6 +1,8 @@
+import torch
+import torch.nn as nn
+import torch.distributed as dist
 # parallel/tensor_parallel.py
 class TensorParallel:
-    """Split weight matrices across GPUs (column/row parallel)."""
     def __init__(self, module, tp_size):
         self.tp_size = tp_size
         self.rank = dist.get_rank()
