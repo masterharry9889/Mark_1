@@ -138,68 +138,63 @@ pytest>=7.4.0
 
 ## Training
 
-### Single-Node (8 GPUs) — MoE-7B
+### Streaming Training (Recommended)
+
+The new `train_streaming.py` script uses Hugging Face datasets in streaming mode (`streaming=True`), which creates an iterable dataset instead of downloading the entire dataset. This is the recommended approach for production training.
 
 ```bash
-torchrun --nproc_per_node=8 train.py \
-  --model_config configs/model_7b.yaml \
-  --data_config configs/data.yaml \
-  --output_dir checkpoints/moe-7b \
-  --wandb_project moe-7b
+# Single GPU / CPU test
+python scripts/train_streaming.py --model moe-small --config configs/training.yaml --device cpu --test-mode
+
+# Single-Node (8 GPUs) — MoE-7B equivalent
+torchrun --nproc_per_node=8 scripts/train_streaming.py \
+  --model moe-large \
+  --config configs/training.yaml
+
+# Multi-Node (256 GPUs) — MoE-225B
+torchrun --nnodes=32 --nproc_per_node=8 \
+  --master_addr=10.0.0.1 --master_port=29500 \
+  --node_rank=0 scripts/train_streaming.py \
+  --model moe-225b \
+  --config configs/training.yaml
 ```
 
-### Multi-Node (256 GPUs) — MoE-225B
+#### Checkpoint Strategy
+
+Two-tier checkpointing manages disk space efficiently:
+
+| Checkpoint Type | File | Frequency | Purpose |
+|-----------------|------|-----------|---------|
+| **Rolling** | `latest.pt` | Every step (configurable) | Overwritten each step; always has latest state |
+| **Permanent** | `checkpoint_step_N.pt` | Every N steps (default 5000) | Retained for recovery; keeps last 5 by default |
 
 ```bash
-# Node 0 (master)
-torchrun --nnodes=32 --nproc_per_node=8 \
-  --master_addr=10.0.0.1 --master_port=29500 \
-  --node_rank=0 train.py \
-  --model_config configs/model_225b.yaml \
-  --data_config configs/data.yaml \
-  --output_dir checkpoints/moe-225b \
-  --wandb_project moe-225b \
-  --tensor_parallel 8 \
-  --pipeline_parallel 4 \
-  --expert_parallel 8
-
-# Node 1-31
-torchrun --nnodes=32 --nproc_per_node=8 \
-  --master_addr=10.0.0.1 --master_port=29500 \
-  --node_rank=$RANK train.py \
-  --model_config configs/model_225b.yaml \
-  --data_config configs/data.yaml \
-  --output_dir checkpoints/moe-225b \
-  --tensor_parallel 8 \
-  --pipeline_parallel 4 \
-  --expert_parallel 8
+# Custom checkpoint intervals
+python scripts/train_streaming.py \
+  --model moe-225b \
+  --rolling-interval 1 \
+  --permanent-interval 5000
 ```
 
-### Training Arguments
+**Auto-resume**: On startup, detects `checkpoints/latest.pt` and restores step, optimizer, scheduler, and RNG state automatically.
+
+**Interrupt safety**: `Ctrl+C` or crashes trigger an immediate permanent checkpoint save before exit.
+
+#### Streaming Training Arguments
 
 | Argument | Description | Default |
 |----------|-------------|---------|
-| `--model_config` | Model YAML config path | Required |
-| `--data_config` | Data pipeline YAML config | Required |
-| `--output_dir` | Checkpoint output directory | `checkpoints/` |
-| `--resume` | Resume from checkpoint path | None |
-| `--wandb_project` | W&B project name | None |
-| `--tensor_parallel` | TP degree | 1 |
-| `--pipeline_parallel` | PP degree | 1 |
-| `--expert_parallel` | EP degree | 1 |
-| `--context_parallel` | CP degree | 1 |
-| `--micro_batch_size` | Per-GPU micro batch size | 32 |
-| `--gradient_accumulation` | Gradient accumulation steps | Auto |
-| `--precision` | bf16 / fp16 / fp32 | bf16 |
+| `--config` | Training YAML config path | `configs/training.yaml` |
+| `--model` | Model variant from `model_config.yaml` | `moe-225b` |
+| `--resume` | Explicit checkpoint path to resume | Auto-detects `latest.pt` |
+| `--device` | Device (auto, cpu, cuda) | `auto` |
+| `--rolling-interval` | Save rolling checkpoint every N steps | 1 |
+| `--permanent-interval` | Save permanent checkpoint every N steps | 5000 |
+| `--test-mode` | Use dummy data (skip HF Hub) | False |
 
-### Resume Training
+### Legacy Training (Original `train.py`)
 
-```bash
-torchrun --nproc_per_node=8 train.py \
-  --model_config configs/model_7b.yaml \
-  --data_config configs/data.yaml \
-  --resume checkpoints/moe-7b/step_50000.pt
-```
+The original training script downloads full datasets and uses the older checkpoint format:
 
 ---
 
@@ -208,10 +203,11 @@ torchrun --nproc_per_node=8 train.py \
 ### Perplexity Evaluation
 
 ```bash
-# Single GPU
+# Single GPU (using model_config.yaml with model name)
 python eval.py \
-  --checkpoint checkpoints/moe-7b/best_model.pt \
-  --model_config configs/model_7b.yaml \
+  --checkpoint checkpoints/moe-large/best_model.pt \
+  --model_config configs/model_config.yaml \
+  --model moe-large \
   --data_config configs/data.yaml \
   --eval_datasets wikitext,c4,pile \
   --eval_batch_size 16 \
@@ -220,7 +216,8 @@ python eval.py \
 # Multi-GPU (DDP)
 torchrun --nproc_per_node=8 eval.py \
   --checkpoint checkpoints/moe-225b/best_model.pt \
-  --model_config configs/model_225b.yaml \
+  --model_config configs/model_config.yaml \
+  --model moe-225b \
   --data_config configs/data.yaml \
   --eval_datasets wikitext,c4,pile \
   --eval_batch_size 16
@@ -230,8 +227,9 @@ torchrun --nproc_per_node=8 eval.py \
 
 ```bash
 python eval.py \
-  --checkpoint checkpoints/moe-7b/best_model.pt \
-  --model_config configs/model_7b.yaml \
+  --checkpoint checkpoints/moe-large/best_model.pt \
+  --model_config configs/model_config.yaml \
+  --model moe-large \
   --generate \
   --prompt "The future of AI is" \
   --max_new_tokens 200 \
@@ -245,8 +243,9 @@ python eval.py \
 ```bash
 # Requires: pip install lm-eval
 python eval.py \
-  --checkpoint checkpoints/moe-7b/best_model.pt \
-  --model_config configs/model_7b.yaml \
+  --checkpoint checkpoints/moe-large/best_model.pt \
+  --model_config configs/model_config.yaml \
+  --model moe-large \
   --benchmarks \
   --tasks hellaswag,arc_easy,arc_challenge,mmlu,winogrande \
   --limit 1000 \
@@ -283,10 +282,19 @@ python eval.py \
 | File | Description |
 |------|-------------|
 | `model_config.yaml` | All model variants (small/medium/large/xlarge/225b) |
-| `model_7b.yaml` | ~7B parameter MoE config |
-| `model_225b.yaml` | 225B parameter MoE config |
+| `model_225b.yaml` | 225B parameter MoE config (standalone) |
 | `data.yaml` | Data pipeline settings |
 | `training.yaml` | Training hyperparameters |
+
+### Available Model Variants (from `model_config.yaml`)
+
+| Variant | Params | Layers | d_model | Experts | Top-K | Context | Use Case |
+|---------|--------|--------|---------|---------|-------|---------|----------|
+| `moe-small` | ~100M | 12 | 768 | 4 | 2 | 2K | Debugging |
+| `moe-medium` | ~1B | 24 | 2048 | 8 | 2 | 4K | Development |
+| `moe-large` | ~7B | 32 | 6144 | 8 | 2 | 4K | Single-node training |
+| `moe-xlarge` | ~30B | 48 | 8192 | 16 | 2 | 8K | Multi-node training |
+| `moe-225b` | ~225B | 96 | 12288 | 256 | 8 | 8K | Production |
 
 ### Key Training Settings (`training.yaml`)
 

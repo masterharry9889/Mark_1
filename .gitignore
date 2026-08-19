@@ -61,6 +61,11 @@ data/
 *.h5
 *.hdf5
 
+# HF Datasets cache
+.cache/
+hf_cache/
+datasets/
+
 # Tokenizer
 *.model
 *.vocab

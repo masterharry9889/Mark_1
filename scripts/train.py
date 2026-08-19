@@ -47,8 +47,8 @@ def load_config(config_path: str) -> Dict[str, Any]:
 def load_tokenizer(config: Dict[str, Any]) -> BPETokenizer:
     """Load or train BPE tokenizer."""
     data_config = config.get("training", {}).get("data", {})
-    vocab_path = data_config.get("vocab_path", "data/tokenizer/vocab.json")
-    merges_path = data_config.get("merges_path", "data/tokenizer/merges.txt")
+    vocab_path = data_config.get("vocab_path", "src/model/Tokenizer/vocab.json")
+    merges_path = data_config.get("merges_path", "src/model/Tokenizer/bpe_merges.txt")
     
     tokenizer = BPETokenizer()
     
