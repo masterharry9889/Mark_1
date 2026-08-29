@@ -42,7 +42,9 @@ def setup_distributed(backend: str = "nccl") -> tuple[int, int, int]:
         world_size = int(os.environ["WORLD_SIZE"])
         local_rank = int(os.environ.get("LOCAL_RANK", 0))
         dist.init_process_group(backend=backend)
-        torch.cuda.set_device(local_rank)
+        if torch.cuda.is_available() and torch.cuda.device_count() > 0:
+            gpu_idx = local_rank % torch.cuda.device_count()
+            torch.cuda.set_device(gpu_idx)
     else:
         rank, world_size, local_rank = 0, 1, 0
     return rank, world_size, local_rank
@@ -373,7 +375,8 @@ def main():
         device = torch.device(args.device)
     
     if device.type == "cuda":
-        torch.cuda.set_device(local_rank)
+        gpu_idx = local_rank % torch.cuda.device_count()
+        torch.cuda.set_device(gpu_idx)
     
     # Load config
     config = load_config(args.config)
@@ -387,10 +390,11 @@ def main():
     
     # DDP wrapping
     if world_size > 1 and device.type == "cuda":
+        gpu_idx = local_rank % torch.cuda.device_count()
         model = torch.nn.parallel.DistributedDataParallel(
             model,
-            device_ids=[local_rank],
-            output_device=local_rank,
+            device_ids=[gpu_idx],
+            output_device=gpu_idx,
             find_unused_parameters=False,  # Set True if MoE causes unused params
         )
     

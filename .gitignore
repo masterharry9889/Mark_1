@@ -52,7 +52,6 @@ wandb/
 .tensorboard/
 
 # Data
-data/
 *.bin
 *.npy
 *.npz
