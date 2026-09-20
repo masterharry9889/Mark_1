@@ -1,0 +1,77 @@
+# Test Training Configuration (small batch/seq for CPU/GPU testing)
+training:
+  global_batch_size: 128        # Small for testing
+  micro_batch_size: 1           # Very small batch
+  sequence_length: 128          # Short sequence
+  gradient_accumulation_steps: 1
+  max_steps: 10                 # Quick test
+  warmup_steps: 2
+  lr_decay_steps: 8
+  min_lr_ratio: 0.1
+  peak_lr: 1.5e-4
+  router_lr: 3.0e-4
+  min_lr: 1.5e-5
+  optimizer:
+    type: "adamw"
+    betas: [0.9, 0.95]
+    eps: 1e-8
+    weight_decay: 0.1
+    router_weight_decay: 0.0
+    max_grad_norm: 1.0
+  scheduler:
+    type: "wsd"
+    warmup_type: "linear"
+    decay_type: "cosine"
+    stable_fraction: 0.5
+  precision: "bf16"
+  use_flash_attention: false
+  parallelism:
+    tensor_parallel: 1
+    pipeline_parallel: 1
+    expert_parallel: 1
+    context_parallel: 1
+    sequence_parallel: false
+    zero_stage: 1
+  checkpoint:
+    save_interval: 5
+    keep_last_n: 2
+    save_optimizer: true
+    save_rng: true
+    async_save: true
+    path: "checkpoints/"
+  logging:
+    log_interval: 1
+    wandb:
+      enabled: false
+    tensorboard:
+      enabled: false
+    console:
+      enabled: true
+      level: "INFO"
+  evaluation:
+    eval_interval: 5
+    eval_steps: 2
+    eval_batch_size: 1
+    eval_datasets: ["wikitext"]
+    metrics: ["perplexity"]
+  data:
+    train_dataset: "fineweb-edu"
+    train_data_path: "data/train"
+    val_data_path: "data/val"
+    num_workers: 0
+    prefetch_factor: 2
+    pin_memory: false
+    shuffle_buffer: 100
+    pack_sequences: false
+    min_seq_len: 32
+    max_seq_len: 128
+  seed: 42
+  deterministic: false
+  resume_from: null
+  load_optimizer: true
+  load_scheduler: true
+
+distributed:
+  backend: "nccl"
+  init_method: "env://"
+  timeout_minutes: 30

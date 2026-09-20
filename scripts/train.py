@@ -179,6 +179,7 @@ def train_step(model, batch, ce_loss, aux_loss, config: Dict[str, Any], device: 
     z = aux_loss.z_loss(router_logits)
     
     total_loss = ce + aux + z
+    total_loss.backward()
     
     return {
         "loss": total_loss.item(),
@@ -265,9 +266,6 @@ def main():
         
         optimizer.zero_grad()
         losses = train_step(model.module if hasattr(model, "module") else model, batch, ce_loss, aux_loss, config, device)
-        
-        total_loss = losses["loss"]
-        total_loss.backward()
         
         max_grad_norm = train_config.get("optimizer", {}).get("max_grad_norm", 1.0)
         torch.nn.utils.clip_grad_norm_(model.parameters(), max_grad_norm)

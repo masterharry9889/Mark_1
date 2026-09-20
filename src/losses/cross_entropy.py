@@ -11,7 +11,7 @@ class FusedCrossEntropy:
     def forward(self, logits, labels):
         # logits: (B, T, V), labels: (B, T)
         return F.cross_entropy(
-            logits.view(-1, logits.size(-1)),
-            labels.view(-1),
+            logits.reshape(-1, logits.size(-1)),
+            labels.reshape(-1),
             label_smoothing=self.label_smoothing
         )

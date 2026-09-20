@@ -1,12 +1,21 @@
 import torch
 import torch.nn.functional as F
+from src.inference.expert_cache import ExpertCache
 # inference/engine.py
 class MoEInferenceEngine:
     """Production inference with KV cache + expert caching."""
     def __init__(self, model, max_batch_size=32, max_seq_len=4096):
         self.model = model
         self.kv_cache = {}
-        self.expert_cache = ExpertCache(model.experts, gpu_budget_gb=60)
+        # Collect all experts from all MoE layers in the model
+        all_experts = []
+        for block in model.blocks:
+            all_experts.extend(block.moe_layer.experts)
+        self.expert_cache = ExpertCache(all_experts, gpu_budget_gb=60)
+
+    def forward_with_cache(self, input_ids):
+        """Forward pass (KV cache not yet implemented; uses standard forward)."""
+        return self.model(input_ids, return_aux_loss=False)[0]
 
     def generate(self, prompt_ids, max_new_tokens=512, temperature=0.8, top_p=0.95):
         input_ids = prompt_ids
@@ -27,4 +36,3 @@ class MoEInferenceEngine:
         sorted_probs /= sorted_probs.sum(dim=-1, keepdim=True)
         idx = torch.multinomial(sorted_probs, 1)
         return sorted_indices.gather(-1, idx)
-    

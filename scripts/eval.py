@@ -130,19 +130,13 @@ def evaluate_on_dataset(
             seq_len = dataloader.max_seq_len
             input_ids = torch.randint(0, 50257, (batch_size, seq_len), device=device)
             labels = torch.randint(0, 50257, (batch_size, seq_len), device=device)
-            
             # Forward pass
-            logits, router_logits, router_indices = model(input_ids)
+            logits, _, _, router_logits, router_indices = model(input_ids, return_router_info=True)
             
             # Compute losses
             ce = ce_loss.forward(logits, labels)
             aux = aux_loss.load_balancing_loss(router_logits, router_indices, model.config.moe.n_experts)
             z = aux_loss.z_loss(router_logits)
-            
-            total_ce += ce.item() * batch_size * seq_len
-            total_aux += aux.item() * batch_size * seq_len
-            total_z += z.item() * batch_size * seq_len
-            total_tokens += batch_size * seq_len
     
     avg_ce = total_ce / total_tokens
     avg_aux = total_aux / total_tokens
@@ -158,7 +152,7 @@ def evaluate_on_dataset(
     with torch.no_grad():
         input_ids = torch.randint(0, 50257, (16, 512), device=device)
         labels = torch.randint(0, 50257, (16, 512), device=device)
-        logits, _, _ = model(input_ids)
+        logits, _, _ = model(input_ids, return_aux_loss=False)
         preds = logits.argmax(dim=-1)
         accuracy = (preds == labels).float().mean().item()
     
